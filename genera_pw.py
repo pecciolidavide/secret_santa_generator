@@ -1,11 +1,15 @@
 """
-Passo 1: chiede i partecipanti e crea
+Passo 1: chiede i partecipanti e crea, in anni/<anno>/:
   - pw.csv                  (Nome, Password, Categoria;)
   - wishlist/<Nome>.txt     (un file vuoto da compilare per ogni persona)
+
+Uso:  python3 genera_pw.py [--anno 2027]
 """
 import os
 import secrets
 import string
+
+import common
 
 FILE_OUTPUT = "pw.csv"
 CARTELLA_WISHLIST = "wishlist"
@@ -50,8 +54,14 @@ def chiedi_partecipanti():
 
 
 def main():
-    if os.path.exists(FILE_OUTPUT):
-        risposta = input(f"{FILE_OUTPUT} esiste già e verrà sovrascritto. Continuare? [s/N] ")
+    anno = common.parser("Crea pw.csv e le wishlist per un anno.").parse_args().anno
+    dati = common.cartella_dati(anno)
+    file_output = os.path.join(dati, FILE_OUTPUT)
+    cartella_wishlist = os.path.join(dati, CARTELLA_WISHLIST)
+
+    print(f"=== Secret Santa {anno} (dati in {dati}) ===\n")
+    if os.path.exists(file_output):
+        risposta = input(f"{file_output} esiste già e verrà sovrascritto. Continuare? [s/N] ")
         if risposta.strip().lower() != "s":
             print("Annullato.")
             return
@@ -70,21 +80,22 @@ def main():
         campi = [nome, pw] + ([categoria] if categoria else [])
         righe.append(", ".join(campi) + ";")
 
-    with open(FILE_OUTPUT, "w", encoding="utf-8") as f:
+    os.makedirs(dati, exist_ok=True)
+    with open(file_output, "w", encoding="utf-8") as f:
         f.write("\n".join(righe) + "\n")
 
-    os.makedirs(CARTELLA_WISHLIST, exist_ok=True)
+    os.makedirs(cartella_wishlist, exist_ok=True)
     nuove = 0
     for nome, _ in persone:
-        percorso = os.path.join(CARTELLA_WISHLIST, f"{nome}.txt")
+        percorso = os.path.join(cartella_wishlist, f"{nome}.txt")
         if os.path.exists(percorso):  # non sovrascrivere liste già compilate
             continue
         with open(percorso, "w", encoding="utf-8") as f:
             f.write(INTESTAZIONE_WISHLIST.format(nome=nome))
         nuove += 1
 
-    print(f"\nScritto {FILE_OUTPUT} con {len(persone)} partecipanti.")
-    print(f"Create {nuove} wishlist in {CARTELLA_WISHLIST}/ (quelle già esistenti non sono state toccate).")
+    print(f"\nScritto {file_output} con {len(persone)} partecipanti.")
+    print(f"Create {nuove} wishlist in {cartella_wishlist}/ (quelle già esistenti non sono state toccate).")
 
 
 if __name__ == "__main__":

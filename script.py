@@ -1,22 +1,26 @@
 """
-Passo 2: legge pw.csv e wishlist/, abbina i partecipanti e genera in public/
-una pagina <password>.html per ognuno.
+Passo 2: legge anni/<anno>/pw.csv e wishlist/, abbina i partecipanti e genera
+in _build/<anno>/ il sito: index.html più una pagina <password>.html per ognuno.
 
-L'abbinamento viene salvato in abbinamenti.csv: rilanciando lo script le pagine
-vengono rigenerate (es. dopo aver modificato una wishlist) SENZA cambiare chi
-regala a chi. Per estrarre un nuovo abbinamento usa:  python3 script.py --nuovo
+L'abbinamento viene salvato in anni/<anno>/abbinamenti.csv: rilanciando lo script
+le pagine vengono rigenerate (es. dopo aver modificato una wishlist) SENZA cambiare
+chi regala a chi. Per estrarre un nuovo abbinamento usa:  python3 script.py --nuovo
+
+Uso:  python3 script.py [--anno 2027] [--nuovo]
 """
 import csv
 import html
 import os
 import random
 import re
+import shutil
 import sys
 
-NOME_FILE_INPUT = "pw.csv"
-FILE_ABBINAMENTI = "abbinamenti.csv"
-CARTELLA_WISHLIST = "wishlist"
-CARTELLA_OUTPUT = "public"  # cartella pubblicata su Netlify
+import common
+
+# Impostati da main() in base all'anno
+NOME_FILE_INPUT = FILE_ABBINAMENTI = CARTELLA_WISHLIST = CARTELLA_OUTPUT = None
+INDEX_TEMPLATE = os.path.join(common.RADICE, "template", "index.html")
 
 
 def leggi_dati(percorso_file):
@@ -145,18 +149,36 @@ def scrivi_html(nome_file, donatore, ricevente, idee):
     pagina = (TEMPLATE.replace("%%DONATORE%%", html.escape(donatore))
                       .replace("%%RICEVENTE%%", html.escape(ricevente))
                       .replace("%%WISHLIST%%", wishlist))
-    os.makedirs(CARTELLA_OUTPUT, exist_ok=True)
     with open(os.path.join(CARTELLA_OUTPUT, f"{nome_file}.html"), "w", encoding="utf-8") as f:
         f.write(pagina)
 
 
+def prepara_output():
+    """Svuota _build/<anno>/ dalle pagine vecchie (senza toccare .git) e copia index.html."""
+    os.makedirs(CARTELLA_OUTPUT, exist_ok=True)
+    for f in os.listdir(CARTELLA_OUTPUT):
+        if f.endswith(".html"):
+            os.remove(os.path.join(CARTELLA_OUTPUT, f))
+    shutil.copy(INDEX_TEMPLATE, os.path.join(CARTELLA_OUTPUT, "index.html"))
+
+
 def main():
+    global NOME_FILE_INPUT, FILE_ABBINAMENTI, CARTELLA_WISHLIST, CARTELLA_OUTPUT
+    p = common.parser("Abbina i partecipanti e genera il sito in _build/<anno>/.")
+    p.add_argument("--nuovo", action="store_true", help="estrai un abbinamento nuovo")
+    args = p.parse_args()
+    dati = common.cartella_dati(args.anno)
+    NOME_FILE_INPUT = os.path.join(dati, "pw.csv")
+    FILE_ABBINAMENTI = os.path.join(dati, "abbinamenti.csv")
+    CARTELLA_WISHLIST = os.path.join(dati, "wishlist")
+    CARTELLA_OUTPUT = common.cartella_build(args.anno)
+
     try:
         persone = leggi_dati(NOME_FILE_INPUT)
     except FileNotFoundError:
-        sys.exit(f"Errore: '{NOME_FILE_INPUT}' non esiste. Lancia prima genera_pw.py.")
+        sys.exit(f"Errore: '{NOME_FILE_INPUT}' non esiste. Lancia prima genera_pw.py --anno {args.anno}.")
 
-    abbinamenti = None if "--nuovo" in sys.argv else carica_abbinamenti(persone)
+    abbinamenti = None if args.nuovo else carica_abbinamenti(persone)
     if abbinamenti is None:
         abbinamenti = estrai_abbinamenti(persone)
         salva_abbinamenti(abbinamenti)
@@ -164,10 +186,11 @@ def main():
     else:
         print(f"Abbinamento esistente riutilizzato da {FILE_ABBINAMENTI}.")
 
+    prepara_output()
     for nome, password, *_ in persone:
         ricevente = abbinamenti[nome]
         scrivi_html(password, nome, ricevente, leggi_wishlist(ricevente))
-    print(f"Generate {len(persone)} pagine in {CARTELLA_OUTPUT}/.")
+    print(f"Generate {len(persone)} pagine in {CARTELLA_OUTPUT}/. Pubblica con: python3 pubblica.py --anno {args.anno}")
 
 
 if __name__ == "__main__":
