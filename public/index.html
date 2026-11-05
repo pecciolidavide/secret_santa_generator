@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Secret Santa</title>
+    <style>
+        body { font-family: sans-serif; padding: 20px; }
+        input, button { padding: 10px; font-size: 16px; }
+    </style>
+</head>
+<body>
+
+    <h3>Inserisci password:</h3>
+
+    <input type="text" id="testoInput" placeholder="password">
+
+    <button onclick="apriLink()">Vai</button>
+
+    <script>
+        function apriLink() {
+            // Recupera il valore inserito nella casella di testo
+            const valore = document.getElementById('testoInput').value;
+            
+            // Verifica che il campo non sia vuoto
+            if (valore.trim() !== "") {
+                // Esegue il redirect a ./VALORE
+                window.location.href = "./" + valore + ".html";
+            } else {
+                alert("Per favore, inserisci la password prima di premere il pulsante.");
+            }
+        }
+    </script>
+
+</body>
+</html>
