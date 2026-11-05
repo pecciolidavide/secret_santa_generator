@@ -14,14 +14,15 @@ def parser(descrizione):
     return p
 
 
-def cartella_dati(anno):
-    """Dati dell'anno (privati): pw.csv, abbinamenti.csv, wishlist/."""
-    return os.path.join(RADICE, "anni", str(anno))
-
-
 def cartella_build(anno):
-    """Sito generato: è anche la working copy della repo di pubblicazione."""
+    """Tutto l'anno: dati (pw.csv, abbinamenti.csv, wishlist/), public/ e netlify.toml.
+    È la working copy della repo di pubblicazione."""
     return os.path.join(RADICE, "_build", str(anno))
+
+
+def cartella_public(anno):
+    """Il solo sito pubblicato da Netlify."""
+    return os.path.join(cartella_build(anno), "public")
 
 
 def nome_repo(anno):

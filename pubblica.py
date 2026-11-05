@@ -1,6 +1,6 @@
 """
-Passo 3: pubblica il contenuto di _build/<anno>/ nella repo secret_santa_<anno>,
-che Netlify serve così com'è (la root della repo è il sito).
+Passo 3: pubblica il contenuto di _build/<anno>/ nella repo secret_santa_<anno>.
+Netlify serve solo la sottocartella public/ (lo dice netlify.toml).
 
 Alla prima esecuzione inizializza git in _build/<anno>/ e collega (o crea, privata)
 la repo su GitHub. Poi fa commit e push.
@@ -23,7 +23,7 @@ def run(cmd, cwd, check=True, capture=False):
 def main():
     anno = common.parser("Pubblica _build/<anno>/ su GitHub.").parse_args().anno
     build = common.cartella_build(anno)
-    if not os.path.exists(os.path.join(build, "index.html")):
+    if not os.path.exists(os.path.join(build, "public", "index.html")):
         sys.exit(f"{build} non contiene il sito: lancia prima script.py --anno {anno}.")
 
     repo = f"{common.OWNER}/{common.nome_repo(anno)}"

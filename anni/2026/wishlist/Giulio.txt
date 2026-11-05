@@ -1,2 +1,0 @@
-# Wishlist di Giulio
-# Scrivi un'idea per riga (testo o link). Le righe che iniziano con # vengono ignorate.

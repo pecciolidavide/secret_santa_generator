@@ -1,8 +1,9 @@
 """
-Passo 2: legge anni/<anno>/pw.csv e wishlist/, abbina i partecipanti e genera
-in _build/<anno>/ il sito: index.html più una pagina <password>.html per ognuno.
+Passo 2: legge _build/<anno>/pw.csv e wishlist/, abbina i partecipanti e genera
+in _build/<anno>/public/ il sito: index.html più una pagina <password>.html per ognuno
+(più netlify.toml, che dice a Netlify di pubblicare solo public/).
 
-L'abbinamento viene salvato in anni/<anno>/abbinamenti.csv: rilanciando lo script
+L'abbinamento viene salvato in _build/<anno>/abbinamenti.csv: rilanciando lo script
 le pagine vengono rigenerate (es. dopo aver modificato una wishlist) SENZA cambiare
 chi regala a chi. Per estrarre un nuovo abbinamento usa:  python3 script.py --nuovo
 
@@ -153,8 +154,10 @@ def scrivi_html(nome_file, donatore, ricevente, idee):
         f.write(pagina)
 
 
-def prepara_output():
-    """Svuota _build/<anno>/ dalle pagine vecchie (senza toccare .git) e copia index.html."""
+def prepara_output(build):
+    """Svuota public/ dalle pagine vecchie, copia index.html e scrive netlify.toml."""
+    with open(os.path.join(build, "netlify.toml"), "w", encoding="utf-8") as f:
+        f.write('[build]\n  publish = "public"\n')
     os.makedirs(CARTELLA_OUTPUT, exist_ok=True)
     for f in os.listdir(CARTELLA_OUTPUT):
         if f.endswith(".html"):
@@ -167,11 +170,11 @@ def main():
     p = common.parser("Abbina i partecipanti e genera il sito in _build/<anno>/.")
     p.add_argument("--nuovo", action="store_true", help="estrai un abbinamento nuovo")
     args = p.parse_args()
-    dati = common.cartella_dati(args.anno)
+    dati = common.cartella_build(args.anno)
     NOME_FILE_INPUT = os.path.join(dati, "pw.csv")
     FILE_ABBINAMENTI = os.path.join(dati, "abbinamenti.csv")
     CARTELLA_WISHLIST = os.path.join(dati, "wishlist")
-    CARTELLA_OUTPUT = common.cartella_build(args.anno)
+    CARTELLA_OUTPUT = common.cartella_public(args.anno)
 
     try:
         persone = leggi_dati(NOME_FILE_INPUT)
@@ -186,7 +189,7 @@ def main():
     else:
         print(f"Abbinamento esistente riutilizzato da {FILE_ABBINAMENTI}.")
 
-    prepara_output()
+    prepara_output(dati)
     for nome, password, *_ in persone:
         ricevente = abbinamenti[nome]
         scrivi_html(password, nome, ricevente, leggi_wishlist(ricevente))

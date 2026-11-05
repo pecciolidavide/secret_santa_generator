@@ -1,5 +1,5 @@
 """
-Passo 1: chiede i partecipanti e crea, in anni/<anno>/:
+Passo 1: chiede i partecipanti e crea, in _build/<anno>/:
   - pw.csv                  (Nome, Password, Categoria;)
   - wishlist/<Nome>.txt     (un file vuoto da compilare per ogni persona)
 
@@ -55,7 +55,7 @@ def chiedi_partecipanti():
 
 def main():
     anno = common.parser("Crea pw.csv e le wishlist per un anno.").parse_args().anno
-    dati = common.cartella_dati(anno)
+    dati = common.cartella_build(anno)
     file_output = os.path.join(dati, FILE_OUTPUT)
     cartella_wishlist = os.path.join(dati, CARTELLA_WISHLIST)
 
